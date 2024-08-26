@@ -13,8 +13,12 @@ function Dashboard() {
     }
   }, []);
 
+  if (!localStorage.getItem("savedKeys")) {
+    localStorage.setItem("savedKeys", JSON.stringify([]));
+  }
+
   return (
-    <div style={{ height: "100vh", margin: "auto" }}>
+    <div style={{ margin: "auto" }}>
       <div
         style={{
           display: "flex",
