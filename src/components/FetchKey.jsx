@@ -6,7 +6,7 @@ import { prettyPrintJson } from "pretty-print-json";
 
 function FetchKey() {
   const [keyAlias, setKeyAlias] = useState("");
-  const [keyDetails, setKeyDetails] = useState([]);
+  const [keyDetails, setKeyDetails] = useState({});
   const headers = {
     "Content-Type": "application/json",
     Authorization: `SKLMAuth userAuthId=${Cookies.get("UserAuthId")}`,
@@ -16,7 +16,8 @@ function FetchKey() {
     console.log(keyAlias);
     try {
       const response = await axios.get(
-        `api/SKLM/rest/v1/keys?alias=${keyAlias}`,
+        `api/SKLM/rest/v1/objects/${keyAlias}`,
+        // `api/SKLM/rest/v1/keys?alias=${keyAlias}`,
         { headers: headers }
       );
       console.log(response.data);
@@ -27,6 +28,10 @@ function FetchKey() {
         alert("Session logged out. Please login again");
         window.location.href = "/";
       }
+      if (error.response.status === 404) {
+        alert("Key not found. Please enter a valid key");
+      }
+      setKeyDetails({});
     }
   };
 
@@ -46,14 +51,14 @@ function FetchKey() {
         style={{
           display: "flex",
           alignItems: "center",
-          width: "400px",
+          width: "600px",
           margin: "10px",
         }}
       >
-        <span style={{ marginRight: "30px", width: "100px" }}>Key Alias</span>
+        <span style={{ marginRight: "30px", width: "100px" }}>Key UUID</span>
         <Input
           type="text"
-          style={{ backgroundColor: "white", width: "300px" }}
+          style={{ backgroundColor: "white", width: "500px" }}
           onChange={(e) => setKeyAlias(e.target.value)}
         />
       </div>
@@ -62,56 +67,44 @@ function FetchKey() {
           Fetch Key Details
         </Button>
       </div>
-      {keyDetails.length > 0 && (
+      {keyDetails.managedObject && (
         <div style={{ marginTop: "30px" }}>
           <Typography variant="h6">
             Following are the details for the given key:
           </Typography>
           <div style={{ marginTop: "20px" }}>
-            {keyDetails.map((key, index) => (
-              <div key={key.uuid}>
-                <div className="key-prop">
-                  <span>UUID: </span>
-                  <span>{key.uuid}</span>
-                </div>
-                <div className="key-prop">
-                  <span>Usage: </span>
-                  <span>{key.usage}</span>
-                </div>
-                <div className="key-prop">
-                  <span>Activation date: </span>
-                  <span>{key["activation date"]}</span>
-                </div>
-                <div className="key-prop">
-                  <span>Key Algorithm: </span>
-                  <span>{key["key algorithm"]}</span>
-                </div>
-                <div className="key-prop">
-                  <span>Key State: </span>
-                  <span>{key["key state"]}</span>
-                </div>
-                {/* <div>
-                  <span>Key State: </span>
-                  <span>{key["key state"]}</span>
-                </div>
-                <div>
-                  <span>Activation date: </span>
-                  <span>{key["activation date"]}</span>
-                </div>
-                <div>
-                  <span>Deactivation Date: </span>
-                  <span>{key["Deactivation Date"]}</span>
-                </div> */}
-                {/* <div>
-                  <span>Usage: </span>
-                  <span>{key.usage}</span>
-                </div>
-                <div>
-                  <span>UUID: </span>
-                  <span>{key}</span>
-                </div> */}
-              </div>
-            ))}
+            <div className="key-prop">
+              <span>ALIAS: </span>
+              <span>{keyDetails.managedObject.alias}</span>
+            </div>
+            <div className="key-prop">
+              <span>UUID: </span>
+              <span>{keyDetails.managedObject.uuid}</span>
+            </div>
+            <div className="key-prop">
+              <span>KEY MATERIAL: </span>
+              <span>{keyDetails.managedObject.KEY_BLOCK.KEY_MATERIAL}</span>
+            </div>
+            <div className="key-prop">
+              <span>Activation date: </span>
+              <span>{keyDetails.managedObject["creation date"]}</span>
+            </div>
+            <div className="key-prop">
+              <span>Key Algorithm: </span>
+              <span>{keyDetails.managedObject["key algorithm"]}</span>
+            </div>
+            <div className="key-prop">
+              <span>Key Length: </span>
+              <span>{keyDetails.managedObject["key length (in bits)"]}</span>
+            </div>
+            <div className="key-prop">
+              <span>Key Type: </span>
+              <span>{keyDetails.managedObject["key type"]}</span>
+            </div>
+            <div className="key-prop">
+              <span>Key State: </span>
+              <span>{keyDetails.managedObject["key state"]}</span>
+            </div>
           </div>
         </div>
       )}
