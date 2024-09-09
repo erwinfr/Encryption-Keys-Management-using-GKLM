@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
@@ -22,28 +22,57 @@ const BootstrapDialog = styled(Dialog)(({ theme }) => ({
 }));
 
 export default function DecryptionModal(props) {
+  const [response, setResponse] = useState("");
+
   const handleClose = () => {
     setResponse("");
     props.handleClose();
   };
 
-  const [response, setResponse] = useState("");
+  function getRandomLetter() {
+    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    return alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+
+  const reKey = async () => {
+    let decrypted = handleDecrypt();
+    if (decrypted === false) {
+      return;
+    }
+    let newKey = await props.generateKeys("1", "rk" + getRandomLetter());
+    console.log("new key", newKey[0], "decrypted", decrypted);
+    const encrypted = CryptoJS.AES.encrypt(decrypted, newKey[0]).toString();
+    let encryptedData = props.encryptedData;
+    console.log("old hash", encryptedData[props.title]);
+    encryptedData[props.title] = encrypted.toString();
+    props.updateEncryptedData(encryptedData);
+    console.log("new hash", encryptedData[props.title]);
+    setResponse("Decrypted Data - " + decrypted + " | New Key - " + newKey);
+  };
 
   const handleDecrypt = () => {
-    console.log("decrypt", props.title, props.hashValue, props.decryptionKey);
-    let decrypted = CryptoJS.AES.decrypt(props.hashValue, props.decryptionKey);
-    if (decrypted.toString(CryptoJS.enc.Utf8).length > 0) {
-      setResponse(`Decrypted Data - ${decrypted.toString(CryptoJS.enc.Utf8)}`);
-    } else {
-      setResponse("Decryption Failed, wrong key selected");
-    }
-    console.log("dec", decrypted);
-    console.log(
-      decrypted.toString(CryptoJS.enc.Utf8),
-      typeof decrypted.toString(CryptoJS.enc.Utf8),
-      decrypted.toString(CryptoJS.enc.Utf8).length
+    console.log("decrypt", props.title, props.decryptionKey);
+    let decrypted = CryptoJS.AES.decrypt(
+      props.encryptedData[props.title],
+      props.decryptionKey
     );
-    // alert(decrypted.toString(CryptoJS.enc.Utf8));
+    if (decrypted.toString(CryptoJS.enc.Utf8).length > 0) {
+      setResponse(
+        `Decrypted Data - ${decrypted.toString(CryptoJS.enc.Utf8)} ${
+          props.operation === "rekey" ? "| Generating New Key..." : ""
+        }`
+      );
+      return decrypted.toString(CryptoJS.enc.Utf8);
+    } else {
+      if (props.operation === "rekey") {
+        setResponse(
+          "Wrong decryption key selected, please select the correct key to complete the operation"
+        );
+      } else {
+        setResponse("Decryption Failed, wrong key selected");
+      }
+      return false;
+    }
   };
 
   return (
@@ -55,7 +84,7 @@ export default function DecryptionModal(props) {
       fullWidth={true}
     >
       <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
-        Decrypt Data
+        {props.operation === "rekey" ? "ReKey" : "Decrypt"} Data
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -74,9 +103,15 @@ export default function DecryptionModal(props) {
         style={{ marginTop: "20px", display: "flex", flexDirection: "column" }}
       >
         <Typography style={{ marginBottom: "20px", marginLeft: "10px" }}>
-          Select a key to decrypt - {props.title}
+          Select a key to decrypt - <strong>{props.title}</strong>.{" "}
+          {props.operation === "rekey"
+            ? "This will be used to rekey the data"
+            : "This will be used to decrypt the data"}
         </Typography>
-        <KeysDropdown keys={props.keys} setSelectedKey={props.setSelectedKey} />
+        <KeysDropdown
+          keys={props.keys}
+          setSelectedKey={props.setDecryptionKey}
+        />
         <Typography style={{ marginTop: "20px", marginLeft: "10px" }}>
           {response}
         </Typography>
@@ -85,10 +120,14 @@ export default function DecryptionModal(props) {
         <Button
           autoFocus
           onClick={() => {
-            handleDecrypt();
+            if (props.operation === "rekey") {
+              reKey();
+            } else {
+              handleDecrypt();
+            }
           }}
         >
-          Decrypt
+          {props.operation === "rekey" ? "ReKey" : "Decrypt"}
         </Button>
       </DialogActions>
     </BootstrapDialog>

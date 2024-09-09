@@ -40,6 +40,12 @@ export default function TextModal(props) {
 
   const handleEncrypt = () => {
     console.log(textValue, titleValue, props.selectedKey);
+    if (titleValue === "") {
+      return alert("Please enter a title");
+    }
+    if (textValue === "") {
+      return alert("Please enter some text");
+    }
     if (props.encryptedData.hasOwnProperty(titleValue)) {
       return alert(
         "Please enter a unique title. This title already has encrypted data"
@@ -49,11 +55,10 @@ export default function TextModal(props) {
       textValue,
       props.selectedKey
     ).toString();
-    localStorage.setItem(
-      "encryptedData",
-      JSON.stringify({ ...props.encryptedData, [titleValue]: encrypted })
-    );
-    props.setEncryptedData({ ...props.encryptedData, [titleValue]: encrypted });
+    props.updateEncryptedData({
+      ...props.encryptedData,
+      [titleValue]: encrypted,
+    });
     console.log(encrypted.toString());
     // const decrypt = CryptoJS.AES.decrypt(encrypted, props.selectedKey).toString(
     //   CryptoJS.enc.Utf8

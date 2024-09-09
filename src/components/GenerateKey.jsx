@@ -17,6 +17,7 @@ function GenerateKey() {
   const [modalOpen, setModalOpen] = useState(false);
   const [decryptModalOpen, setDecryptModalOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [decryptOperation, setDecryptOperation] = useState("");
   const [savedKeys, setSavedKeys] = useState(
     JSON.parse(localStorage.getItem("savedKeys"))
   );
@@ -28,7 +29,11 @@ function GenerateKey() {
     }
   });
 
-  let keyList = [];
+  const updateEncryptedData = (data) => {
+    setEncryptedData(data);
+    localStorage.setItem("encryptedData", JSON.stringify(data));
+  };
+
   const ALPHABETIC_REGEX = /^[a-zA-Z]+$/;
   const headers = {
     "Content-Type": "application/json",
@@ -47,12 +52,11 @@ function GenerateKey() {
     console.log("updated");
   }, [encryptedData]);
 
-  const generateKeys = () => {
-    console.log(noOfKeys, alias);
-    axios
-      .post(
+  const generateKeys = async (noOfKeys, alias) => {
+    let keyList = [];
+    try {
+      const response = await axios.post(
         "api/SKLM/rest/v1/objects/symmetrickey",
-        // "api/SKLM/rest/v1/keys",
         {
           clientName: "KMI_DEMO",
           bitLength: "256",
@@ -61,45 +65,40 @@ function GenerateKey() {
           cryptoUsageMask: "Encrypt_Decrypt",
           algorithm: "AES",
         },
-        // {
-        //   numOfKeys: noOfKeys,
-        //   alias: alias,
-        //   usage: "KMI_DEMO",
-        // },
         { headers: headers }
-      )
-      .then((response) => {
+      );
+
+      if (response.data.id) {
         console.log(response.data);
-        alert("Key generated successfully");
-        if (response.data.id) {
-          keyList = [];
-          if (Array.isArray(response.data.id)) {
-            keyList.push(...response.data.id);
-            setGeneratedKeys(response.data.id.length);
-            localStorage.setItem(
-              "savedKeys",
-              JSON.stringify([...savedKeys, ...response.data.id])
-            );
-            setSavedKeys([...savedKeys, ...response.data.id]);
-          } else {
-            keyList.push(response.data.id);
-            setGeneratedKeys(1);
-            localStorage.setItem(
-              "savedKeys",
-              JSON.stringify([...savedKeys, response.data.id])
-            );
-            setSavedKeys([...savedKeys, response.data.id]);
-          }
+        alert("Keys generated successfully");
+        if (Array.isArray(response.data.id)) {
+          keyList.push(...response.data.id);
+          setGeneratedKeys(response.data.id.length);
+          localStorage.setItem(
+            "savedKeys",
+            JSON.stringify([...savedKeys, ...response.data.id])
+          );
+          setSavedKeys([...savedKeys, ...response.data.id]);
+        } else {
+          keyList.push(response.data.id);
+          setGeneratedKeys(1);
+          localStorage.setItem(
+            "savedKeys",
+            JSON.stringify([...savedKeys, response.data.id])
+          );
+          setSavedKeys([...savedKeys, response.data.id]);
         }
+        console.log(keyList);
         setKeys(keyList);
-      })
-      .catch((error) => {
-        console.error("There was an error!", error);
-        if (error.response.status === 401) {
-          alert("Session logged out. Please login again");
-          window.location.href = "/";
-        }
-      });
+      }
+      return keyList;
+    } catch (error) {
+      console.error("There was an error!", error);
+      if (error.response.status === 401) {
+        alert("Session logged out. Please login again");
+        window.location.href = "/";
+      }
+    }
   };
 
   return (
@@ -155,7 +154,12 @@ function GenerateKey() {
         />
       </div>
       <div style={{ marginTop: "30px" }}>
-        <Button variant="contained" onClick={generateKeys}>
+        <Button
+          variant="contained"
+          onClick={() => {
+            let keys = generateKeys(noOfKeys, alias);
+          }}
+        >
           Generate
         </Button>
       </div>
@@ -225,7 +229,7 @@ function GenerateKey() {
             open={modalOpen}
             handleClose={modalClose}
             selectedKey={selectedKey}
-            setEncryptedData={setEncryptedData}
+            updateEncryptedData={updateEncryptedData}
             encryptedData={encryptedData}
           />
         </div>
@@ -263,6 +267,17 @@ function GenerateKey() {
                     </span>
                     <Button
                       onClick={() => {
+                        setDecryptOperation("rekey");
+                        setTitle(data);
+                        setHashValue(encryptedData[data]);
+                        setDecryptModalOpen(true);
+                      }}
+                    >
+                      ReKey
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setDecryptOperation("decrypt");
                         setTitle(data);
                         setHashValue(encryptedData[data]);
                         setDecryptModalOpen(true);
@@ -276,12 +291,8 @@ function GenerateKey() {
                         let obj = { ...encryptedData };
                         console.log(obj);
                         delete obj[data];
-                        setEncryptedData(obj);
+                        updateEncryptedData(obj);
                         console.log(obj, encryptedData);
-                        localStorage.setItem(
-                          "encryptedData",
-                          JSON.stringify(obj)
-                        );
                       }}
                     >
                       Delete
@@ -291,13 +302,16 @@ function GenerateKey() {
               })}
           </div>
           <DecryptionModal
+            generateKeys={generateKeys}
+            operation={decryptOperation}
             open={decryptModalOpen}
             handleClose={decryptModalClose}
             keys={savedKeys}
-            setSelectedKey={setDecryptionKey}
+            setDecryptionKey={setDecryptionKey}
             decryptionKey={decryptionKey}
             title={title}
-            hashValue={hashValue}
+            encryptedData={encryptedData}
+            updateEncryptedData={updateEncryptedData}
           />
         </div>
       </div>

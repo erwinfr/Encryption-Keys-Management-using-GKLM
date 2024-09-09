@@ -27,7 +27,7 @@ export default function Login() {
 
     try {
       const response = await axios.post(
-        "api/SKLM/rest/v1/ckms/accessToken",
+        "api/SKLM/rest/v1/ckms/login",
         credentials,
         {
           headers: {
@@ -38,6 +38,7 @@ export default function Login() {
 
       if (response.status === 200) {
         const userAuthId = response.data.UserAuthId;
+        console.log(response.data, userAuthId);
         Cookies.set("UserAuthId", userAuthId, { expires: 1 / 24 });
         // localStorage.setItem("UserAuthId", userAuthId);
         console.log("Login successful!");
