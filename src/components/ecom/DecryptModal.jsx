@@ -78,11 +78,15 @@ function DecryptModal(props) {
           CryptoJS.enc.Utf8
         );
       } else {
-        return JSON.parse(
-          CryptoJS.AES.decrypt(decData, props.decryptionKey).toString(
-            CryptoJS.enc.Utf8
-          )
-        );
+        return CryptoJS.AES.decrypt(decData, props.decryptionKey).toString(
+          CryptoJS.enc.Utf8
+        )
+          ? JSON.parse(
+              CryptoJS.AES.decrypt(decData, props.decryptionKey).toString(
+                CryptoJS.enc.Utf8
+              )
+            )
+          : null;
       }
     });
     console.log("decrypted", decrypted);

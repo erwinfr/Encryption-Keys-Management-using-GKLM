@@ -66,7 +66,10 @@ function CheckoutPage() {
       const week = getWeekNumber(new Date());
       console.log("week", week, newDate);
       // Save transaction to localStorage
-      let currentKey = localStorage.getItem("currentKey");
+      let key = localStorage.getItem("currentKey");
+      let currentKey = CryptoJS.enc.Base64.parse(key).toString(
+        CryptoJS.enc.Utf8
+      );
       const transactions =
         JSON.parse(localStorage.getItem("transactions")) || {};
       if (!transactions[week]) transactions[week] = [];

@@ -23,7 +23,9 @@ function AdminPage() {
     if (localStorage.getItem("currentKey") === null) {
       return "";
     } else {
-      return localStorage.getItem("currentKey");
+      let key = localStorage.getItem("currentKey");
+      let decData = CryptoJS.enc.Base64.parse(key).toString(CryptoJS.enc.Utf8);
+      return decData;
     }
   });
   const [savedKeys, setSavedKeys] = useState(() => {
@@ -136,7 +138,11 @@ function AdminPage() {
     });
     setTransactions({ ...transactions, [ltsWeek]: encData });
     setCurrentKey(newKey[0]);
-    localStorage.setItem("currentKey", newKey[0]);
+    let base64Key = CryptoJS.enc.Base64.stringify(
+      CryptoJS.enc.Utf8.parse(newKey[0])
+    );
+    console.log(base64Key);
+    localStorage.setItem("currentKey", base64Key);
   };
 
   const generateDummyData = async () => {
@@ -146,7 +152,11 @@ function AdminPage() {
     );
     console.log("new key", newKey[0]);
     setCurrentKey(newKey[0]);
-    localStorage.setItem("currentKey", JSON.stringify(newKey[0]));
+    let base64Key = CryptoJS.enc.Base64.stringify(
+      CryptoJS.enc.Utf8.parse(newKey[0])
+    );
+    console.log(base64Key);
+    localStorage.setItem("currentKey", base64Key);
     const groupedTransactions = {
       34: [
         {
@@ -337,7 +347,7 @@ function AdminPage() {
                     transactions[week].map((transaction, index) => (
                       <Box key={index} mb={2}>
                         <Typography>
-                          {transaction.id ? (
+                          {transaction && transaction.id ? (
                             `Transaction ID: ${transaction.id}`
                           ) : (
                             <span
@@ -350,7 +360,7 @@ function AdminPage() {
                           )}
                         </Typography>
                         <Typography>
-                          {transaction.time
+                          {transaction && transaction.time
                             ? `Transaction Time: ${transaction.time}`
                             : null}
                         </Typography>
