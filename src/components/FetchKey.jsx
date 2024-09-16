@@ -2,11 +2,19 @@ import React, { useState } from "react";
 import { TextField, Button, Input, Typography } from "@mui/material";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { prettyPrintJson } from "pretty-print-json";
+import KeysDropdown from "./KeysDropdown";
 
 function FetchKey() {
   const [keyAlias, setKeyAlias] = useState("");
   const [keyDetails, setKeyDetails] = useState({});
+  const [savedKeys, setSavedKeys] = useState(() => {
+    if (localStorage.getItem("savedKeys") === null) {
+      return [];
+    } else {
+      return JSON.parse(localStorage.getItem("savedKeys"));
+    }
+  });
+  const [selectedKey, setSelectedKey] = useState("");
   const headers = {
     "Content-Type": "application/json",
     Authorization: `SKLMAuth userAuthId=${Cookies.get("UserAuthId")}`,
@@ -14,9 +22,10 @@ function FetchKey() {
 
   const fetchKey = async () => {
     console.log(keyAlias);
+    let key = selectedKey.length > 0 ? selectedKey : keyAlias;
     try {
       const response = await axios.get(
-        `api/SKLM/rest/v1/objects/${keyAlias}`,
+        `api/SKLM/rest/v1/objects/${key}`,
         // `api/SKLM/rest/v1/keys?alias=${keyAlias}`,
         { headers: headers }
       );
@@ -24,14 +33,15 @@ function FetchKey() {
       setKeyDetails(response.data);
     } catch (error) {
       console.error("There was an error!", error);
-      if (error.response.status === 401) {
-        alert("Session logged out. Please login again");
-        window.location.href = "/";
-      }
-      if (error.response.status === 404) {
-        alert("Key not found. Please enter a valid key");
-      }
-      setKeyDetails({});
+      alert("There was an error");
+      // if (error.response.status === 401) {
+      //   alert("Session logged out. Please login again");
+      //   window.location.href = "/";
+      // }
+      // if (error.response.status === 404) {
+      //   alert("Key not found. Please enter a valid key");
+      // }
+      // setKeyDetails({});
     }
   };
 
@@ -50,17 +60,29 @@ function FetchKey() {
       <div
         style={{
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           width: "600px",
           margin: "10px",
         }}
       >
-        <span style={{ marginRight: "30px", width: "100px" }}>Key UUID</span>
+        <span
+          style={{ paddingBottom: "20px", paddingLeft: "30px", width: "100px" }}
+        >
+          Key UUID
+        </span>
         <Input
           type="text"
-          style={{ backgroundColor: "white", width: "500px" }}
+          style={{
+            backgroundColor: "white",
+            width: "500px",
+          }}
           onChange={(e) => setKeyAlias(e.target.value)}
         />
+        <span style={{ paddingBottom: "20px", paddingTop: "20px" }}>
+          OR Select a key from dropdown below
+        </span>
+        <KeysDropdown keys={savedKeys} setSelectedKey={setSelectedKey} />
       </div>
       <div style={{ marginTop: "30px" }}>
         <Button variant="contained" onClick={fetchKey}>

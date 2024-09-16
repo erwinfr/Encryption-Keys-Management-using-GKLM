@@ -61,7 +61,7 @@ export default function TextModal(props) {
     });
     console.log(encrypted.toString());
     // const decrypt = CryptoJS.AES.decrypt(encrypted, props.selectedKey).toString(
-    //   CryptoJS.enc.Utf8
+    //
     // );
     // console.log(decrypt);
     handleClose();

@@ -36,6 +36,7 @@ function Dashboard() {
         <Cards url="/deleteKey" title="Delete Key" />
         {/* <Cards url="/fetchMasterKey" title="Fetch Master Key" /> */}
         <Cards url="/rotateMasterKey" title="Rotate Master Key" />
+        <Cards url="/store" title="E Commerce Store" />
       </div>
       {window.location.pathname.includes("generateKey") ? (
         <GenerateKey />
